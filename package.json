@@ -1,0 +1,14 @@
+{
+  "name": "lighthouse-mag",
+  "version": "1.0.0",
+  "author": "Damian Mielczarek, Jakub Owadowski",
+  "type": "module",
+  "scripts": {
+    "start": "node run.js"
+  },
+  "dependencies": {
+    "chromium-edge-launcher": "^0.3.0",
+    "dotenv": "^16.4.5",
+    "lighthouse": "^12.0.0"
+  }
+}
