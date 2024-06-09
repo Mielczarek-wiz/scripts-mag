@@ -30,7 +30,7 @@ export const generateReportsEdge = async () => {
             runnerResult.lhr.audits,
             lighthouseOption
           );
-
+          console.log(numericValues);
           reports.push(numericValues);
         } catch (error) {
           console.error("lighthouse", error);
@@ -39,7 +39,14 @@ export const generateReportsEdge = async () => {
           edge.kill();
         }
       }
-
+      console.log("****** Making CSV and JSON reports ******");
+      makeCSV(
+        reports,
+        lighthouseOption.onlyAudits,
+        "edge",
+        page.displayName,
+        lighthouseOption.emulatedFormFactor
+      );
       calculateResults(reports);
       makeReport(
         JSON.stringify(calculateResults(reports)),
@@ -78,7 +85,6 @@ export const generateReportsChrome = async () => {
             runnerResult.lhr.audits,
             lighthouseOption
           );
-
           reports.push(numericValues);
         } catch (error) {
           console.error("lighthouse", error);
@@ -87,7 +93,14 @@ export const generateReportsChrome = async () => {
           chrome.kill();
         }
       }
-
+      console.log("****** Making CSV and JSON reports ******");
+      makeCSV(
+        reports,
+        lighthouseOption.onlyAudits,
+        "chrome",
+        page.displayName,
+        lighthouseOption.emulatedFormFactor
+      );
       calculateResults(reports);
       makeReport(
         JSON.stringify(calculateResults(reports)),
@@ -99,6 +112,25 @@ export const generateReportsChrome = async () => {
   }
 
   console.log("****** Ending Lighthouse analysis ******");
+};
+
+const makeCSV = (reports, audits, browser, page, device) => {
+  const dir =
+    "reports/" +
+    process.env.TEST_NAME +
+    "/" +
+    browser +
+    "/" +
+    page +
+    "/" +
+    device;
+  const header = audits.join(",") + "\n";
+  const rows = reports.map((report) => {
+    return audits.map((audit) => report[audit]).join(",");
+  });
+  const csv = header + rows.join("\n");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(dir + "/" + process.env.INSTANCE_SIZE + ".csv", csv);
 };
 
 const retriveValues = (audits, lighthouseOption) => {
