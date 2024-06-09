@@ -11,6 +11,11 @@ export const options = [
       "total-blocking-time",
       "server-response-time",
     ],
+    throttling: {
+      rttMs: 40,
+      throughputKbps: 10 * 1024,
+      cpuSlowdownMultiplier: 1,
+    },
   },
   {
     output: "json", // could be html, json, csv
@@ -24,6 +29,11 @@ export const options = [
       "total-blocking-time",
       "server-response-time",
     ],
+    throttling: {
+      rttMs: 40,
+      throughputKbps: 10 * 1024,
+      cpuSlowdownMultiplier: 1,
+    },
   },
 ];
 
