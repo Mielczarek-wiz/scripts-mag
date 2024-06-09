@@ -28,4 +28,8 @@ export const options = [
 ];
 
 export const flags = ["--headless"];
-
+export const pages = [
+  { page: "/home", displayName: "home" },
+  { page: "/Category0", displayName: "category" },
+  { page: "/Category0/0", displayName: "recipe" },
+];

@@ -2,90 +2,102 @@ import lighthouse from "lighthouse";
 import * as chromeLauncher from "chrome-launcher";
 import * as edgeLauncher from "chromium-edge-launcher";
 import fs from "fs";
-import { flags, options } from "./settings.js";
+import { flags, options, pages } from "./settings.js";
 import "dotenv/config";
 
 export const generateReportsEdge = async () => {
   console.log("****** Starting Lighthouse EDGE analysis ******");
   for (const lighthouseOption of options) {
-    const reports = [];
-
     console.log("****** " + lighthouseOption.emulatedFormFactor + " ******");
-
-    for (let i = 0; i < process.env.NUM_OF_REPEATS; i++) {
-      console.log("*** Iteration " + i + " ***");
-      const edge = await edgeLauncher.launch({
-        edgeFlags: flags,
-      });
-
-      try {
-        const runnerResult = await lighthouse(process.env.FRONTEND_URL, {
-          ...lighthouseOption,
-          port: edge.port,
+    for (const page of pages) {
+      const reports = [];
+      console.log("****** PAGE: " + page.displayName + " ******");
+      for (let i = 0; i < process.env.NUM_OF_REPEATS; i++) {
+        console.log("*** Iteration " + i + " ***");
+        const edge = await edgeLauncher.launch({
+          edgeFlags: flags,
         });
-        const numericValues = retriveValues(
-          runnerResult.lhr.audits,
-          lighthouseOption
-        );
 
-        reports.push(numericValues);
-      } catch (error) {
-        console.error("lighthouse", error);
-      } finally {
-        await wait(500);
-        edge.kill();
+        try {
+          const runnerResult = await lighthouse(
+            process.env.FRONTEND_URL + page.page,
+            {
+              ...lighthouseOption,
+              port: edge.port,
+            }
+          );
+          const numericValues = retriveValues(
+            runnerResult.lhr.audits,
+            lighthouseOption
+          );
+
+          reports.push(numericValues);
+        } catch (error) {
+          console.error("lighthouse", error);
+        } finally {
+          await wait(500);
+          edge.kill();
+        }
       }
-    }
 
-    calculateResults(reports);
-    makeReport(
-      JSON.stringify(calculateResults(reports)),
-      "edge",
-      lighthouseOption.emulatedFormFactor
-    );
+      calculateResults(reports);
+      makeReport(
+        JSON.stringify(calculateResults(reports)),
+        "edge",
+        page.displayName,
+        lighthouseOption.emulatedFormFactor
+      );
+    }
   }
+
   console.log("****** Ending Lighthouse analysis ******");
 };
 
 export const generateReportsChrome = async () => {
   console.log("****** Starting Lighthouse CHROME analysis ******");
   for (const lighthouseOption of options) {
-    const reports = [];
-
     console.log("****** " + lighthouseOption.emulatedFormFactor + " ******");
-
-    for (let i = 0; i < process.env.NUM_OF_REPEATS; i++) {
-      console.log("*** Iteration " + i + " ***");
-      const chrome = await chromeLauncher.launch({
-        chromeFlags: flags,
-      });
-
-      try {
-        const runnerResult = await lighthouse(process.env.FRONTEND_URL, {
-          ...lighthouseOption,
-          port: chrome.port,
+    for (const page of pages) {
+      const reports = [];
+      console.log("****** PAGE: " + page.displayName + " ******");
+      for (let i = 0; i < process.env.NUM_OF_REPEATS; i++) {
+        console.log("*** Iteration " + i + " ***");
+        const chrome = await chromeLauncher.launch({
+          chromeFlags: flags,
         });
-        const numericValues = retriveValues(
-          runnerResult.lhr.audits,
-          lighthouseOption
-        );
 
-        reports.push(numericValues);
-      } catch (error) {
-        console.error("lighthouse", error);
-      } finally {
-        await wait(500);
-        chrome.kill();
+        try {
+          const runnerResult = await lighthouse(
+            process.env.FRONTEND_URL + page.page,
+            {
+              ...lighthouseOption,
+              port: chrome.port,
+            }
+          );
+          const numericValues = retriveValues(
+            runnerResult.lhr.audits,
+            lighthouseOption
+          );
+
+          reports.push(numericValues);
+        } catch (error) {
+          console.error("lighthouse", error);
+        } finally {
+          await wait(500);
+          chrome.kill();
+        }
       }
-    }
 
-    calculateResults(reports);
-    makeReport(
-      JSON.stringify(calculateResults(reports)),
-      "chrome",
-      lighthouseOption.emulatedFormFactor
-    );
+      calculateResults(reports);
+      makeReport(
+        JSON.stringify(calculateResults(reports)),
+        "chrome",
+        page.displayName,
+        lighthouseOption.emulatedFormFactor
+      );
+    }
   }
+
   console.log("****** Ending Lighthouse analysis ******");
 };
 
@@ -116,16 +128,18 @@ const calculateResults = (reports) => {
   return meanReport;
 };
 
-const makeReport = (report, browser, device) => {
+const makeReport = (report, browser, page, device) => {
   const dir =
     "reports/" +
     process.env.TEST_NAME +
     "/" +
     browser +
     "/" +
-    process.env.INSTANCE_SIZE;
+    page +
+    "/" +
+    device;
   fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(dir + "/" + device + ".json", report);
+  fs.writeFileSync(dir + "/" + process.env.INSTANCE_SIZE + ".json", report);
 };
 
 const wait = async (val) => {
