@@ -1,12 +1,15 @@
 import lighthouse from "lighthouse";
-import * as chromeLauncher from "chrome-launcher";
-import * as edgeLauncher from "chromium-edge-launcher";
 import fs from "fs";
-import { flags, options, pages } from "./settings.js";
+import { options, pages } from "./settings.mjs";
+import { getLauncher } from "./launcher.mjs";
 import "dotenv/config";
 
-export const generateReportsEdge = async () => {
-  console.log("****** Starting Lighthouse EDGE analysis ******");
+export const runTest = async (browser = "chrome") => {
+  console.log(
+    "****** Starting Lighthouse " + browser.toUpperCase() + " analysis ******"
+  );
+  const startTime = performance.now();
+
   for (const lighthouseOption of options) {
     console.log("****** " + lighthouseOption.emulatedFormFactor + " ******");
     for (const page of pages) {
@@ -14,71 +17,14 @@ export const generateReportsEdge = async () => {
       console.log("****** PAGE: " + page.displayName + " ******");
       for (let i = 0; i < process.env.NUM_OF_REPEATS; i++) {
         console.log("*** Iteration " + i + " ***");
-        const edge = await edgeLauncher.launch({
-          edgeFlags: flags,
-        });
+        const launcher = await getLauncher(browser);
 
         try {
           const runnerResult = await lighthouse(
             process.env.FRONTEND_URL + page.page,
             {
               ...lighthouseOption,
-              port: edge.port,
-            }
-          );
-          const numericValues = retriveValues(
-            runnerResult.lhr.audits,
-            lighthouseOption
-          );
-          console.log(numericValues);
-          reports.push(numericValues);
-        } catch (error) {
-          console.error("lighthouse", error);
-        } finally {
-          await wait(500);
-          edge.kill();
-        }
-      }
-      console.log("****** Making CSV and JSON reports ******");
-      makeCSV(
-        reports,
-        lighthouseOption.onlyAudits,
-        "edge",
-        page.displayName,
-        lighthouseOption.emulatedFormFactor
-      );
-      calculateResults(reports);
-      makeReport(
-        JSON.stringify(calculateResults(reports)),
-        "edge",
-        page.displayName,
-        lighthouseOption.emulatedFormFactor
-      );
-    }
-  }
-
-  console.log("****** Ending Lighthouse analysis ******");
-};
-
-export const generateReportsChrome = async () => {
-  console.log("****** Starting Lighthouse CHROME analysis ******");
-  for (const lighthouseOption of options) {
-    console.log("****** " + lighthouseOption.emulatedFormFactor + " ******");
-    for (const page of pages) {
-      const reports = [];
-      console.log("****** PAGE: " + page.displayName + " ******");
-      for (let i = 0; i < process.env.NUM_OF_REPEATS; i++) {
-        console.log("*** Iteration " + i + " ***");
-        const chrome = await chromeLauncher.launch({
-          chromeFlags: flags,
-        });
-
-        try {
-          const runnerResult = await lighthouse(
-            process.env.FRONTEND_URL + page.page,
-            {
-              ...lighthouseOption,
-              port: chrome.port,
+              port: launcher.port,
             }
           );
           const numericValues = retriveValues(
@@ -90,28 +36,34 @@ export const generateReportsChrome = async () => {
           console.error("lighthouse", error);
         } finally {
           await wait(500);
-          chrome.kill();
+          launcher.kill();
         }
       }
       console.log("****** Making CSV and JSON reports ******");
       makeCSV(
         reports,
         lighthouseOption.onlyAudits,
-        "chrome",
+        browser,
         page.displayName,
         lighthouseOption.emulatedFormFactor
       );
-      calculateResults(reports);
       makeReport(
         JSON.stringify(calculateResults(reports)),
-        "chrome",
+        browser,
         page.displayName,
         lighthouseOption.emulatedFormFactor
       );
     }
   }
 
-  console.log("****** Ending Lighthouse analysis ******");
+  const endTime = performance.now();
+  console.log(
+    "Ending.. Total time for " +
+      browser.toUpperCase() +
+      " analyses: " +
+      ((endTime - startTime) / 1000).toFixed(3) +
+      " seconds"
+  );
 };
 
 const makeCSV = (reports, audits, browser, page, device) => {
@@ -151,13 +103,17 @@ const calculateResults = (reports) => {
     return acc;
   }, {});
 
-  const meanReport = Object.fromEntries(
+  return Object.fromEntries(
     Object.entries(reducedReport).map(([key, values]) => {
-      return [key + " AVG", trimMean(values)];
+      return [
+        key,
+        {
+          mean: trimMean(values),
+          median: findMedian(values),
+        },
+      ];
     })
   );
-
-  return meanReport;
 };
 
 const makeReport = (report, browser, page, device) => {
@@ -187,4 +143,15 @@ const trimMean = (values) => {
       trimmedValues.length
     ).toFixed(3)
   );
+};
+const findMedian = (values) => {
+  const sortedValues = values.sort((a, b) => a - b);
+  const trimmedValues = sortedValues.slice(1, sortedValues.length - 1);
+  const middleIndex = Math.floor(trimmedValues.length / 2);
+
+  if (trimmedValues.length % 2 === 0) {
+    return (trimmedValues[middleIndex - 1] + trimmedValues[middleIndex]) / 2;
+  } else {
+    return trimmedValues[middleIndex];
+  }
 };

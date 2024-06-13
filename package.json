@@ -4,7 +4,7 @@
   "author": "Damian Mielczarek, Jakub Owadowski",
   "type": "module",
   "scripts": {
-    "start": "node run.js"
+    "start": "node run.mjs"
   },
   "dependencies": {
     "chromium-edge-launcher": "^0.3.0",

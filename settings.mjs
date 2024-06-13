@@ -11,11 +11,6 @@ export const options = [
       "total-blocking-time",
       "server-response-time",
     ],
-    throttling: {
-      rttMs: 40,
-      throughputKbps: 10 * 1024,
-      cpuSlowdownMultiplier: 1,
-    },
   },
   {
     output: "json", // could be html, json, csv
@@ -29,11 +24,6 @@ export const options = [
       "total-blocking-time",
       "server-response-time",
     ],
-    throttling: {
-      rttMs: 40,
-      throughputKbps: 10 * 1024,
-      cpuSlowdownMultiplier: 1,
-    },
   },
 ];
 
@@ -43,3 +33,5 @@ export const pages = [
   { page: "/Category0", displayName: "category" },
   { page: "/Category0/0", displayName: "recipe" },
 ];
+
+export const browsers = ["chrome", "edge"];
