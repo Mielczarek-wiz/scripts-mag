@@ -27,7 +27,7 @@ export const options = [
   },
 ];
 
-export const flags = ["--headless"];
+export const flags = ["--headless", "--no-sandbox"];
 export const pages = [
   { page: "/home", displayName: "home" },
   { page: "/Category0", displayName: "category" },
