@@ -6,7 +6,6 @@ export const options = [
     onlyAudits: [
       "first-contentful-paint",
       "largest-contentful-paint",
-      "first-meaningful-paint",
       "speed-index",
       "total-blocking-time",
       "server-response-time",
@@ -19,7 +18,6 @@ export const options = [
     onlyAudits: [
       "first-contentful-paint",
       "largest-contentful-paint",
-      "first-meaningful-paint",
       "speed-index",
       "total-blocking-time",
       "server-response-time",
@@ -27,7 +25,7 @@ export const options = [
   },
 ];
 
-export const flags = ["--headless", "--no-sandbox"];
+export const flags = ["--headless"];
 export const pages = [
   { page: "/home", displayName: "home" },
   { page: "/Category0", displayName: "category" },
